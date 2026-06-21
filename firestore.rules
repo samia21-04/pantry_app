@@ -1,0 +1,23 @@
+// firestore.rules
+// Paste this into Firebase Console → Firestore → Rules
+
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Lists: readable/writable only by members
+    match /lists/{listId} {
+      allow read, update: if request.auth != null &&
+        request.auth.token.email in resource.data.members;
+      allow create: if request.auth != null;
+      allow delete: if request.auth != null &&
+        request.auth.uid == resource.data.ownerId;
+
+      // Items subcollection: same membership check
+      match /items/{itemId} {
+        allow read, write: if request.auth != null &&
+          request.auth.token.email in get(/databases/$(database)/documents/lists/$(listId)).data.members;
+      }
+    }
+  }
+}
